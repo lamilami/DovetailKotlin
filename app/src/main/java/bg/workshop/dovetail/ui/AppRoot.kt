@@ -13,6 +13,7 @@ import bg.workshop.dovetail.model.Bit
 import bg.workshop.dovetail.model.Jig
 import bg.workshop.dovetail.model.Library
 import bg.workshop.dovetail.model.RouterBase
+import bg.workshop.dovetail.ui.about.AboutScreen
 import bg.workshop.dovetail.ui.home.HomeScreen
 import bg.workshop.dovetail.ui.library.LibraryScreen
 import bg.workshop.dovetail.ui.setup.SetupScreen
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.asStateFlow
 sealed interface Screen {
     data object Home : Screen
     data object Library : Screen
+    data object About : Screen
     data class Setup(val projectId: String) : Screen
 }
 
@@ -35,6 +37,7 @@ class AppViewModel(private val repo: LibraryRepository) : ViewModel() {
 
     fun home() { _screen.value = Screen.Home }
     fun showLibrary() { _screen.value = Screen.Library }
+    fun showAbout() { _screen.value = Screen.About }
     fun open(projectId: String) { _screen.value = Screen.Setup(projectId) }
 
     fun create(joint: JointType) {
@@ -61,6 +64,10 @@ fun AppRoot(repo: LibraryRepository) {
         Screen.Library -> {
             BackHandler { app.home() }
             LibraryScreen(app, onBack = app::home)
+        }
+        Screen.About -> {
+            BackHandler { app.home() }
+            AboutScreen(onBack = app::home)
         }
         is Screen.Setup -> {
             if (repo.library.value.project(s.projectId) == null) {

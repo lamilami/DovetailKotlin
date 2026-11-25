@@ -1,6 +1,19 @@
 # Лястовича опашка — Android Kotlin
 Асистент за настройка на шаблон за лястовича опашка. Води стъпка по стъпка по реда на ръководството на шаблона, със схема за всяка стъпка. Изцяло офлайн, без разрешение за интернет.
 
+**Отговорно лице:** Даниел Денков
+
+**Изтегляне:** готовият APK е в раздел [Releases](../../releases).
+
+## Екрани
+| Начало | Стъпка 1 | Заден ограничител | Карта с настройки |
+|---|---|---|---|
+| <img src="screenshots/01-home.png" width="200"> | <img src="screenshots/02-dovetail-step1.png" width="200"> | <img src="screenshots/03-dovetail-step4.png" width="200"> | <img src="screenshots/04-dovetail-step7.png" width="200"> |
+
+| Основа на фрезера | Относно | Инструменти |
+|---|---|---|
+| <img src="screenshots/03b-dovetail-step4-scroll.png" width="200"> | <img src="screenshots/05-about.png" width="200"> | <img src="screenshots/06-tools.png" width="200"> |
+
 Отвори папката в Android Studio (JDK 17+, compileSdk 35). Gradle wrapper 9.6.0, AGP 8.7.3, Kotlin 2.2.21, Jetpack Compose.
 
 ```

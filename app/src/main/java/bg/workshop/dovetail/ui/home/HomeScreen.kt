@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -62,6 +63,9 @@ fun HomeScreen(app: AppViewModel) {
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Работилница", fontWeight = FontWeight.SemiBold) },
+                navigationIcon = {
+                    IconButton(onClick = app::showAbout) { Icon(Icons.Filled.Info, "Относно") }
+                },
                 actions = {
                     TextButton(onClick = app::showLibrary) {
                         Icon(Icons.Filled.Build, null)

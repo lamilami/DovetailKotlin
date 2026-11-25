@@ -152,14 +152,15 @@ fun EndStopsDiagram(finger: Double?, slot: Double?) = Diagram(250.dp) { kit ->
     drawRect(kit.ink, Offset(line - stopW, hY), Size(stopW, stopH))
     label(kit, "хоризонтален стопер", line + 10.dp.toPx(), hY + stopH / 2, style = kit.strong)
 
-    // Вертикален стопер — ½" вдясно
-    val vX = line + (JigSpec.STOP_OFFSET * scale).toFloat()
+    // Вертикален стопер — половин стъпка вдясно
+    val offset = JigSpec.stopOffset(f, s)!!
+    val vX = line + (offset * scale).toFloat()
     val vY = 195.dp.toPx()
     drawRect(kit.ink, Offset(vX - stopW, vY), Size(stopW, stopH))
     drawLine(kit.muted, Offset(vX, vY - 14.dp.toPx()), Offset(vX, vY + stopH), 1.dp.toPx(), pathEffect = dashed)
     label(kit, "вертикален стопер", vX + 10.dp.toPx(), vY + stopH / 2, style = kit.strong)
     dimension(kit, Offset(line, vY - 14.dp.toPx()), Offset(vX, vY - 14.dp.toPx()), "")
-    label(kit, "${JigSpec.STOP_OFFSET.mm()} mm (½\")", vX + 10.dp.toPx(), vY - 14.dp.toPx(), style = kit.strong.copy(color = kit.c.dimension))
+    label(kit, stopOffsetText(offset), vX + 10.dp.toPx(), vY - 14.dp.toPx(), style = kit.strong.copy(color = kit.c.dimension))
 }
 
 // ─── 2. Центриране ──────────────────────────────────────────────────────
@@ -436,3 +437,7 @@ fun CutPathDiagram(finger: Double?, slot: Double?) = Diagram(250.dp) { kit ->
     label(kit, "1 · лек проход отдясно наляво, по върховете", pad, size.height - 34.dp.toPx(), style = kit.strong.copy(color = kit.c.axis))
     label(kit, "2 · навътре и навън по пръстите, отляво надясно", pad, size.height - 12.dp.toPx(), style = kit.strong.copy(color = kit.c.dimension))
 }
+
+/** "11,11 mm (7/16\")" или само "11,5 mm", ако не е точна дроб в инчове. */
+fun stopOffsetText(offset: Double): String =
+    "${offset.mm()} mm" + (bg.workshop.dovetail.geometry.inchFraction(offset)?.let { " ($it)" } ?: "")

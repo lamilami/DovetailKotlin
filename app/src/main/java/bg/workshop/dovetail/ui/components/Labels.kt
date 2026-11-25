@@ -46,7 +46,7 @@ val Warning.message: String
     get() = when (this) {
         Warning.WALL_BELOW_MINIMUM -> "Остатъчната стена е под зададения минимум."
         Warning.DEPTH_EXCEEDS_CUTTING_HEIGHT -> "Дълбочината е над режещата част на фрезера."
-        Warning.WIDTH_NOT_FULLY_FORMED -> "Ширината не е кратна на ½\" (12,7 mm) — крайните опашки няма да са изцяло оформени."
+        Warning.WIDTH_NOT_FULLY_FORMED -> "Ширината не е кратна на половин стъпка на шаблона — крайните опашки няма да са изцяло оформени."
         Warning.DEPTH_OUTSIDE_RECOMMENDED -> "Ръководството препоръчва начална дълбочина 10–11 mm под пръстите."
         Warning.JOINT_INTERFERENCE -> "Фрезерът е по-малък от лагера — зъбите са по-широки от гнездата и сглобката няма да влезе."
         Warning.JOINT_LOOSE -> "Хлабината е над 0,3 mm — сглобката ще е видимо хлабава."

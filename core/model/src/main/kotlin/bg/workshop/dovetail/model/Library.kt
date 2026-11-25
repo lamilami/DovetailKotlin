@@ -86,10 +86,27 @@ data class Library(
     fun bitsFor(joint: JointType): List<Bit> = bits.filter { it.kind == joint.bitKind }
     fun recentProjects(): List<Project> = projects.sortedByDescending { it.updatedAt }
 
+    /** Добавя стандартните шаблони, които липсват в библиотека от по-стара версия. Не пипа съществуващите. */
+    fun migrate(): Library {
+        if (version >= CURRENT_VERSION) return this
+        val known = jigs.map { it.id }.toSet()
+        return copy(version = CURRENT_VERSION, jigs = jigs + PRESET_JIGS.filterNot { it.id in known })
+    }
+
     companion object {
-        /** Начална библиотека: шаблонът от ръководството и типичните инструменти. */
+        const val CURRENT_VERSION = 2
+
+        /** Стандартни шаблони 1/2", 7/16", 9/16" — пръст = прорез = размера на шаблона. */
+        val PRESET_JIGS = listOf(
+            Jig("jig-12-7", "Шаблон 1/2\" (12,7 mm)", 12.7, 12.7),
+            Jig("jig-7-16", "Шаблон 7/16\" (11,1 mm)", 11.1125, 11.1125),
+            Jig("jig-9-16", "Шаблон 9/16\" (14,3 mm)", 14.2875, 14.2875),
+        )
+
+        /** Начална библиотека: стандартните шаблони и типичните инструменти. */
         fun seed() = Library(
-            jigs = listOf(Jig("jig-12-7", "Шаблон 12,7 / 12,7", 12.7, 12.7)),
+            version = CURRENT_VERSION,
+            jigs = PRESET_JIGS,
             bits = listOf(
                 Bit("bit-dt-14-8", "Лястовича Ø14,8 (стандартен)", BitKind.DOVETAIL, 14.8),
                 Bit("bit-dt-15-35", "Лястовича Ø15,35", BitKind.DOVETAIL, 15.35),

@@ -41,6 +41,7 @@ import bg.workshop.dovetail.ui.diagram.ClampDiagram
 import bg.workshop.dovetail.ui.diagram.CutPathDiagram
 import bg.workshop.dovetail.ui.diagram.DrawerPartsDiagram
 import bg.workshop.dovetail.ui.diagram.EndStopsDiagram
+import bg.workshop.dovetail.ui.diagram.stopOffsetText
 import bg.workshop.dovetail.ui.diagram.FingerBitDiagram
 import bg.workshop.dovetail.ui.diagram.FingerMeshDiagram
 import bg.workshop.dovetail.ui.diagram.FingerSlotDiagram
@@ -92,7 +93,9 @@ fun StopsStep(state: SetupUiState, lib: Library, vm: SetupViewModel) {
             listOf(
                 "С гония начертай линия с молив през средата на първия пръст — перпендикулярна на ръбовете на шаблона.",
                 "Подравни вътрешния ръб на левия хоризонтален стопер с линията. Провери с гония.",
-                "Измести вертикалния стопер на ${JigSpec.STOP_OFFSET.mm()} mm (½\") вдясно от хоризонталния, перпендикулярно на горната страна.",
+                "Измести вертикалния стопер на " +
+                    (JigSpec.stopOffset(state.value(Field.FINGER), state.value(Field.SLOT))?.let(::stopOffsetText) ?: "половин стъпка") +
+                    " вдясно от хоризонталния (половин стъпка на шаблона), перпендикулярно на горната страна.",
                 "Повтори огледално от дясната страна.",
             ),
         )
@@ -363,7 +366,7 @@ fun TrialStep(state: SetupUiState) {
         SummaryRow("Стъпка", c?.pitch?.let { "${it.mm()} mm" })
         when (state.joint) {
             JointType.DOVETAIL -> {
-                SummaryRow("Стопери", "${JigSpec.STOP_OFFSET.mm()} mm")
+                SummaryRow("Стопери", JigSpec.stopOffset(state.value(Field.FINGER), state.value(Field.SLOT))?.let(::stopOffsetText))
                 SummaryRow("Шаблон назад от детайла", "${JigSpec.TEMPLATE_SETBACK.mm()} mm")
                 SummaryRow("Заден ограничител", state.backStop.display { "${it.distance.mm()} mm" })
                 SummaryRow("Дълбочина под пръстите", state.value(Field.DEPTH)?.let { "${it.mm()} mm" })

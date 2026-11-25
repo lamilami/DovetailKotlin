@@ -46,4 +46,23 @@ class LibraryTest {
         assertTrue(seed.bitsFor(JointType.DOVETAIL).all { it.kind == BitKind.DOVETAIL })
         assertEquals(listOf("bit-st-12-7"), seed.bitsFor(JointType.FINGER).map { it.id })
     }
+
+    @Test fun seedHasThreeStandardJigs() {
+        assertEquals(listOf("jig-12-7", "jig-7-16", "jig-9-16"), Library.seed().jigs.map { it.id })
+    }
+
+    @Test fun migrateAddsMissingPresetsAndKeepsUserData() {
+        val mine = Jig("jig-12-7", "Моят", 12.7, 12.7)
+        val custom = Jig("x", "Друг", 10.0, 10.0)
+        val old = Library(version = 1, jigs = listOf(mine, custom))
+        val m = old.migrate()
+        assertEquals(Library.CURRENT_VERSION, m.version)
+        assertEquals(listOf("jig-12-7", "x", "jig-7-16", "jig-9-16"), m.jigs.map { it.id })
+        assertEquals("Моят", m.jigs.first().name)
+    }
+
+    @Test fun migrateIsNoOpOnCurrentVersion() {
+        val lib = Library.seed().deleteJig("jig-7-16")
+        assertEquals(lib, lib.migrate())
+    }
 }

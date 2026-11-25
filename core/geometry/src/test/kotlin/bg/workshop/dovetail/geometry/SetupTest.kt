@@ -128,4 +128,20 @@ class SetupTest {
             bitProfile(15.35, null, null, 10.0),
         )
     }
+
+    @Test fun stopOffsetIsHalfPitch() {
+        assertEquals(12.7, JigSpec.stopOffset(12.7, 12.7)!!, tol)
+        assertEquals(11.1125, JigSpec.stopOffset(11.1125, 11.1125)!!, tol)
+        assertEquals(14.2875, JigSpec.stopOffset(14.2875, 14.2875)!!, tol)
+        assertNull(JigSpec.stopOffset(null, 12.7))
+    }
+
+    @Test fun inchFractions() {
+        assertEquals("1/2\"", inchFraction(12.7))
+        assertEquals("7/16\"", inchFraction(11.1125))
+        assertEquals("9/16\"", inchFraction(14.2875))
+        assertEquals("9/16\"", inchFraction(14.3))
+        assertEquals("1\"", inchFraction(25.4))
+        assertNull(inchFraction(13.0))
+    }
 }

@@ -43,7 +43,7 @@ class LibraryRepository(private val file: File, private val scope: CoroutineScop
     private fun load(): Library {
         if (!file.exists()) return Library.seed()
         return try {
-            LibraryCodec.decode(file.readText())
+            LibraryCodec.decode(file.readText()).migrate()
         } catch (e: Exception) {
             // Не презаписваме повреден файл — пазим го до новия, за да не се губят данни.
             val backup = File(file.parentFile, "library.corrupt-${System.currentTimeMillis()}.json")

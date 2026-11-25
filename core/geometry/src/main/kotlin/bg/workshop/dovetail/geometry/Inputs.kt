@@ -43,13 +43,35 @@ fun parseOptionalMeasure(text: String): Double? {
 
 /**
  * Фиксираните настройки на шаблона по ръководството:
- * вертикалният стопер е изместен на ½" от хоризонталния,
+ * вертикалният стопер е изместен на половин стъпка от хоризонталния
+ * (½" при шаблон 1/2", 7/16" при 7/16", 9/16" при 9/16"),
  * върховете на пръстите са 3 mm навътре от вертикалния детайл,
  * фрезерът започва с 10–11 mm под пръстите.
  */
 object JigSpec {
-    const val STOP_OFFSET = 12.7
+    /** Изместване на вертикалния стопер = половин стъпка (пръст + прорез) / 2. */
+    fun stopOffset(finger: Double?, slot: Double?): Double? =
+        if (finger == null || slot == null) null else (finger + slot) / 2
     const val TEMPLATE_SETBACK = 3.0
     const val START_DEPTH_MIN = 10.0
     const val START_DEPTH_MAX = 11.0
+}
+
+/**
+ * Размер в mm като дроб в инчове до 1/16", например 11,1125 → "7/16\"".
+ * Връща null, ако размерът не е кратен на 1/16" (допуск 0,02 mm).
+ */
+fun inchFraction(mm: Double): String? {
+    val sixteenths = mm / 25.4 * 16
+    val n = kotlin.math.round(sixteenths).toInt()
+    if (n <= 0 || kotlin.math.abs(sixteenths - n) * 25.4 / 16 > 0.02) return null
+    val whole = n / 16
+    var num = n % 16
+    var den = 16
+    while (num != 0 && num % 2 == 0) { num /= 2; den /= 2 }
+    return when {
+        num == 0 -> "$whole\""
+        whole == 0 -> "$num/$den\""
+        else -> "$whole $num/$den\""
+    }
 }

@@ -7,6 +7,7 @@ import bg.workshop.dovetail.data.bitFrom
 import bg.workshop.dovetail.data.fieldInputs
 import bg.workshop.dovetail.data.inputs
 import bg.workshop.dovetail.data.jigFrom
+import bg.workshop.dovetail.data.matches
 import bg.workshop.dovetail.geometry.BackStop
 import bg.workshop.dovetail.geometry.BitProfile
 import bg.workshop.dovetail.geometry.Calc
@@ -14,6 +15,8 @@ import bg.workshop.dovetail.geometry.Centering
 import bg.workshop.dovetail.geometry.Field
 import bg.workshop.dovetail.geometry.FingerJoint
 import bg.workshop.dovetail.geometry.JointType
+import bg.workshop.dovetail.geometry.ThicknessIssue
+import bg.workshop.dovetail.geometry.thicknessIssues
 import bg.workshop.dovetail.geometry.Wall
 import bg.workshop.dovetail.geometry.backStop
 import bg.workshop.dovetail.geometry.bitProfile
@@ -59,6 +62,9 @@ data class SetupUiState(
     val wall: Calc<Wall>,
     val bit: Calc<BitProfile>,
     val finger: Calc<FingerJoint>,
+    /** Шаблонът от библиотеката, чиито размери съвпадат с полетата (ако има). */
+    val jig: Jig?,
+    val thickness: List<ThicknessIssue>,
 ) {
     val steps: List<Step> get() = stepsFor(joint)
     val stepIndex: Int get() = steps.indexOf(step).coerceAtLeast(0)
@@ -135,6 +141,7 @@ class SetupViewModel(private val repo: LibraryRepository, private val projectId:
 
     private fun compute(name: String, joint: JointType, text: Map<Field, String>, flatToStop: Boolean, step: Step): SetupUiState {
         fun v(f: Field) = parseMeasure(text[f].orEmpty())
+        val jig = repo.library.value.jigs.firstOrNull { text.matches(it.inputs()) }
         return SetupUiState(
             projectName = name,
             joint = joint,
@@ -143,13 +150,17 @@ class SetupViewModel(private val repo: LibraryRepository, private val projectId:
             step = step,
             centering = centering(v(Field.BOARD_WIDTH), v(Field.FINGER), v(Field.SLOT)),
             backStop = backStop(v(Field.BASE_DIAMETER), v(Field.CENTER_TO_FLAT), flatToStop, v(Field.THICKNESS), v(Field.BIT_DIAMETER)),
-            wall = wall(v(Field.THICKNESS), v(Field.DEPTH), v(Field.MIN_WALL)),
+            wall = wall(v(Field.FRONT_THICKNESS), v(Field.DEPTH), v(Field.MIN_WALL)),
             bit = bitProfile(v(Field.BIT_DIAMETER), v(Field.ANGLE), v(Field.CUTTING_HEIGHT), v(Field.DEPTH)),
             finger = fingerJoint(
                 v(Field.FINGER), v(Field.SLOT), v(Field.BIT_DIAMETER), v(Field.BEARING_DIAMETER), v(Field.THICKNESS),
                 cuttingLength = v(Field.CUTTING_HEIGHT),
                 proud = parseOptionalMeasure(text[Field.PROUD].orEmpty()),
             ),
+            jig = jig,
+            thickness = if (joint == JointType.DOVETAIL) {
+                thicknessIssues(v(Field.FRONT_THICKNESS), v(Field.THICKNESS), jig?.limits)
+            } else emptyList(),
         )
     }
 }

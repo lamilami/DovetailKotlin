@@ -89,6 +89,7 @@ private val commonDefaults = mapOf(
 )
 
 private val dovetailDefaults = commonDefaults + mapOf(
+    Field.FRONT_THICKNESS to "18",
     Field.BASE_DIAMETER to "160",
     Field.CENTER_TO_FLAT to "70",
     Field.BIT_DIAMETER to "15,35",

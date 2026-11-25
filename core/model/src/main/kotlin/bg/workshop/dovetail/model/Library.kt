@@ -1,6 +1,8 @@
 package bg.workshop.dovetail.model
 
+import bg.workshop.dovetail.geometry.Field
 import bg.workshop.dovetail.geometry.JointType
+import bg.workshop.dovetail.geometry.ThicknessLimits
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -11,7 +13,17 @@ data class Jig(
     val name: String,
     val finger: Double,
     val slot: Double,
-)
+    /** Допустима дебелина на лицето (хоризонталния детайл), mm. */
+    val frontMin: Double? = null,
+    val frontMax: Double? = null,
+    /** Допустима дебелина на страните (вертикалния детайл), mm. */
+    val sideMin: Double? = null,
+    val sideMax: Double? = null,
+) {
+    val limits: ThicknessLimits?
+        get() = ThicknessLimits(frontMin, frontMax, sideMin, sideMax)
+            .takeIf { listOf(frontMin, frontMax, sideMin, sideMax).any { it != null } }
+}
 
 @Serializable
 enum class BitKind {
@@ -86,19 +98,45 @@ data class Library(
     fun bitsFor(joint: JointType): List<Bit> = bits.filter { it.kind == joint.bitKind }
     fun recentProjects(): List<Project> = projects.sortedByDescending { it.updatedAt }
 
-    /** Добавя стандартните шаблони, които липсват в библиотека от по-стара версия. Не пипа съществуващите. */
+    /** Обновява библиотека от по-стара версия. Потребителските данни не се губят. */
     fun migrate(): Library {
-        if (version >= CURRENT_VERSION) return this
-        val known = jigs.map { it.id }.toSet()
-        return copy(version = CURRENT_VERSION, jigs = jigs + PRESET_JIGS.filterNot { it.id in known })
+        var lib = this
+        if (lib.version < 2) {
+            // v2: стандартните шаблони 7/16" и 9/16"
+            val known = lib.jigs.map { it.id }.toSet()
+            lib = lib.copy(version = 2, jigs = lib.jigs + PRESET_JIGS.filterNot { it.id in known })
+        }
+        if (lib.version < 3) {
+            // v3: обхват на дебелините за 1/2" шаблона; отделна дебелина на лицето
+            val preset = PRESET_JIGS.associateBy { it.id }
+            lib = lib.copy(
+                version = 3,
+                jigs = lib.jigs.map { j ->
+                    val p = preset[j.id]
+                    if (p != null && j.limits == null) {
+                        j.copy(frontMin = p.frontMin, frontMax = p.frontMax, sideMin = p.sideMin, sideMax = p.sideMax)
+                    } else j
+                },
+                projects = lib.projects.map { p ->
+                    val side = p.inputs[Field.THICKNESS.name]
+                    if (p.joint == JointType.DOVETAIL && Field.FRONT_THICKNESS.name !in p.inputs && side != null) {
+                        p.copy(inputs = p.inputs + (Field.FRONT_THICKNESS.name to side))
+                    } else p
+                },
+            )
+        }
+        return lib
     }
 
     companion object {
-        const val CURRENT_VERSION = 2
+        const val CURRENT_VERSION = 3
 
-        /** Стандартни шаблони 1/2", 7/16", 9/16" — пръст = прорез = размера на шаблона. */
+        /**
+         * Стандартни шаблони 1/2", 7/16", 9/16" — пръст = прорез = размера на шаблона.
+         * Обхватът на дебелините е от спецификацията на 1/2" шаблона (лице 15–30, страни 10–30 mm).
+         */
         val PRESET_JIGS = listOf(
-            Jig("jig-12-7", "Шаблон 1/2\" (12,7 mm)", 12.7, 12.7),
+            Jig("jig-12-7", "Шаблон 1/2\" (12,7 mm)", 12.7, 12.7, frontMin = 15.0, frontMax = 30.0, sideMin = 10.0, sideMax = 30.0),
             Jig("jig-7-16", "Шаблон 7/16\" (11,1 mm)", 11.1125, 11.1125),
             Jig("jig-9-16", "Шаблон 9/16\" (14,3 mm)", 14.2875, 14.2875),
         )

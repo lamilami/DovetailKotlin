@@ -1,7 +1,9 @@
 package bg.workshop.dovetail.ui.components
 
+import bg.workshop.dovetail.geometry.Board
 import bg.workshop.dovetail.geometry.Field
 import bg.workshop.dovetail.geometry.Reason
+import bg.workshop.dovetail.geometry.ThicknessIssue
 import bg.workshop.dovetail.geometry.Warning
 import java.util.Locale
 
@@ -24,6 +26,7 @@ val Field.label: String
         Field.CUTTING_HEIGHT -> "Височина на режещата част"
         Field.BEARING_DIAMETER -> "Диаметър на копирния лагер"
         Field.PROUD -> "Надстояване на зъбите (по избор)"
+        Field.FRONT_THICKNESS -> "Дебелина на лицето / гърба"
     }
 
 val Field.unit: String get() = if (this == Field.ANGLE) "°" else "mm"
@@ -41,6 +44,20 @@ val Reason.message: String
         Reason.BEARING_WIDER_THAN_SLOT -> "Лагерът е по-широк от прореза на шаблона — няма да влезе в него."
         Reason.FINGER_GEOMETRY_IMPOSSIBLE -> "Фрезерът е твърде голям спрямо лагера — гнездата изяждат зъбите."
     }
+
+val ThicknessIssue.message: String
+    get() {
+        val what = if (board == Board.FRONT) "лицето / гърба" else "страните"
+        return "Дебелината на $what (${value.mm()} mm) е извън обхвата на шаблона: ${rangeText(min, max)}."
+    }
+
+/** 15–30 mm / от 15 mm / до 30 mm / без ограничение. */
+fun rangeText(min: Double?, max: Double?): String = when {
+    min != null && max != null -> "${min.mm()}–${max.mm()} mm"
+    min != null -> "от ${min.mm()} mm"
+    max != null -> "до ${max.mm()} mm"
+    else -> "без ограничение"
+}
 
 val Warning.message: String
     get() = when (this) {

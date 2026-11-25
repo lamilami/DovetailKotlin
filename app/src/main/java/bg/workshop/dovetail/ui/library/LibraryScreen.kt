@@ -110,7 +110,7 @@ fun LibraryScreen(app: AppViewModel, onBack: () -> Unit) {
             ) {
                 when (tab) {
                     LibTab.JIGS -> items(lib.jigs, key = { it.id }) { j ->
-                        ItemCard(j.name, "Пръст ${j.finger.mm()} · прорез ${j.slot.mm()} mm", { editing = Editing.JigEdit(j) }) {
+                        ItemCard(j.name, j.subtitle(), { editing = Editing.JigEdit(j) }) {
                             deleting = Deleting(j.name) { app.deleteJig(j.id) }
                         }
                     }
@@ -232,10 +232,40 @@ private fun Double?.text() = this?.asInput() ?: ""
 private fun JigDialog(jig: Jig?, onDismiss: () -> Unit, onSave: (Jig) -> Unit) = EditorDialog(
     title = if (jig == null) "Нов шаблон" else "Шаблон",
     initialName = jig?.name ?: "",
-    initialValues = mapOf("finger" to jig?.finger.text(), "slot" to jig?.slot.text()),
-    fields = listOf(EdField("finger", "Метален пръст"), EdField("slot", "Прорез")),
+    initialValues = mapOf(
+        "finger" to jig?.finger.text(),
+        "slot" to jig?.slot.text(),
+        "frontMin" to jig?.frontMin.text(),
+        "frontMax" to jig?.frontMax.text(),
+        "sideMin" to jig?.sideMin.text(),
+        "sideMax" to jig?.sideMax.text(),
+    ),
+    fields = listOf(
+        EdField("finger", "Метален пръст"),
+        EdField("slot", "Прорез"),
+        EdField("frontMin", "Лице — мин. дебелина", required = false),
+        EdField("frontMax", "Лице — макс. дебелина", required = false),
+        EdField("sideMin", "Страни — мин. дебелина", required = false),
+        EdField("sideMax", "Страни — макс. дебелина", required = false),
+    ),
     onDismiss = onDismiss,
-) { name, v -> onSave(Jig(jig?.id ?: newId(), name, v["finger"]!!, v["slot"]!!)) }
+) { name, v ->
+    onSave(Jig(jig?.id ?: newId(), name, v["finger"]!!, v["slot"]!!, v["frontMin"], v["frontMax"], v["sideMin"], v["sideMax"]))
+}
+
+private fun Jig.subtitle(): String {
+    val base = "Пръст ${finger.mm()} · прорез ${slot.mm()} mm"
+    fun r(min: Double?, max: Double?) = when {
+        min != null && max != null -> "${min.mm()}–${max.mm()}"
+        min != null -> "≥${min.mm()}"
+        max != null -> "≤${max.mm()}"
+        else -> null
+    }
+    val front = r(frontMin, frontMax)?.let { "лице $it" }
+    val side = r(sideMin, sideMax)?.let { "страни $it" }
+    val ranges = listOfNotNull(front, side)
+    return if (ranges.isEmpty()) base else base + "\n" + ranges.joinToString(" · ") + " mm"
+}
 
 @Composable
 private fun BaseDialog(base: RouterBase?, onDismiss: () -> Unit, onSave: (RouterBase) -> Unit) = EditorDialog(

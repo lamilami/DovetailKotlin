@@ -16,6 +16,34 @@ enum class Field {
     BEARING_DIAMETER,
     /** Надстояване на зъбите над съседния детайл (за изравняване). Празно = 0. */
     PROUD,
+    /** Дебелина на лицето/гърба (хоризонталния детайл с полускритите гнезда). */
+    FRONT_THICKNESS,
+}
+
+/** Допустими дебелини за шаблона по спецификацията на производителя. null = без ограничение. */
+data class ThicknessLimits(
+    val frontMin: Double? = null,
+    val frontMax: Double? = null,
+    val sideMin: Double? = null,
+    val sideMax: Double? = null,
+)
+
+enum class Board { FRONT, SIDE }
+
+/** Детайл с дебелина извън обхвата на шаблона. */
+data class ThicknessIssue(val board: Board, val value: Double, val min: Double?, val max: Double?)
+
+fun thicknessIssues(front: Double?, side: Double?, limits: ThicknessLimits?): List<ThicknessIssue> {
+    if (limits == null) return emptyList()
+    fun check(board: Board, v: Double?, min: Double?, max: Double?): ThicknessIssue? {
+        if (v == null) return null
+        val out = (min != null && v < min - 1e-9) || (max != null && v > max + 1e-9)
+        return if (out) ThicknessIssue(board, v, min, max) else null
+    }
+    return listOfNotNull(
+        check(Board.FRONT, front, limits.frontMin, limits.frontMax),
+        check(Board.SIDE, side, limits.sideMin, limits.sideMax),
+    )
 }
 
 /** Вид сглобка, която шаблонът реже. */

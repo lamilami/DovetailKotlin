@@ -144,4 +144,19 @@ class SetupTest {
         assertEquals("1\"", inchFraction(25.4))
         assertNull(inchFraction(13.0))
     }
+
+    @Test fun thicknessWithinRange() {
+        val l = ThicknessLimits(15.0, 30.0, 10.0, 30.0)
+        assertTrue(thicknessIssues(18.0, 18.0, l).isEmpty())
+        assertTrue(thicknessIssues(15.0, 30.0, l).isEmpty())
+        assertTrue(thicknessIssues(12.0, 8.0, null).isEmpty())
+    }
+
+    @Test fun thicknessOutOfRange() {
+        val l = ThicknessLimits(15.0, 30.0, 10.0, 30.0)
+        assertEquals(
+            listOf(ThicknessIssue(Board.FRONT, 12.0, 15.0, 30.0), ThicknessIssue(Board.SIDE, 32.0, 10.0, 30.0)),
+            thicknessIssues(12.0, 32.0, l),
+        )
+    }
 }

@@ -59,6 +59,20 @@ class LibraryTest {
         assertEquals(Library.CURRENT_VERSION, m.version)
         assertEquals(listOf("jig-12-7", "x", "jig-7-16", "jig-9-16"), m.jigs.map { it.id })
         assertEquals("Моят", m.jigs.first().name)
+        // v3: стандартният 1/2" получава обхвата, чуждият шаблон — не
+        assertEquals(15.0, m.jigs.first().frontMin)
+        assertNull(m.jigs[1].limits)
+    }
+
+    @Test fun migrateCopiesSideThicknessToFront() {
+        val p = project("a", 1)
+        val m = Library(version = 2, projects = listOf(p)).migrate()
+        assertEquals("18", m.projects.single().inputs["FRONT_THICKNESS"])
+    }
+
+    @Test fun migrateKeepsUserRanges() {
+        val mine = Jig("jig-12-7", "Моят", 12.7, 12.7, frontMin = 12.0)
+        assertEquals(12.0, Library(version = 2, jigs = listOf(mine)).migrate().jigs.single().frontMin)
     }
 
     @Test fun migrateIsNoOpOnCurrentVersion() {

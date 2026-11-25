@@ -33,7 +33,9 @@ import bg.workshop.dovetail.ui.components.ResultGrid
 import bg.workshop.dovetail.ui.components.ResultItem
 import bg.workshop.dovetail.ui.components.StepHeader
 import bg.workshop.dovetail.ui.components.Tone
+import bg.workshop.dovetail.ui.components.message
 import bg.workshop.dovetail.ui.components.mm
+import bg.workshop.dovetail.ui.components.rangeText
 import bg.workshop.dovetail.ui.diagram.BackStopDistanceDiagram
 import bg.workshop.dovetail.ui.diagram.BitDepthDiagram
 import bg.workshop.dovetail.ui.diagram.CenteringDiagram
@@ -141,6 +143,7 @@ fun PartsStep(state: SetupUiState, vm: SetupViewModel) {
             }
         }
     }
+    if (state.joint == JointType.DOVETAIL) ThicknessPanel(state, vm)
     when (state.joint) {
         JointType.DOVETAIL -> Panel("Разположение") {
             DrawerPartsDiagram()
@@ -177,11 +180,14 @@ fun PartsStep(state: SetupUiState, vm: SetupViewModel) {
 @Composable
 fun ClampStep(state: SetupUiState, vm: SetupViewModel) {
     val t = state.value(Field.THICKNESS)
+    val front = state.value(Field.FRONT_THICKNESS)
     val finger = state.joint == JointType.FINGER
     StepHeader("Закрепване", if (finger) "Детайлът вертикално, шаблонът лежи равно върху опора." else "Двата детайла трябва да са наравно под шаблона.")
     Panel {
-        ClampDiagram(t, finger)
+        ClampDiagram(if (finger) t else front, finger)
+        if (!finger) MeasureField(Field.FRONT_THICKNESS, state.text(Field.FRONT_THICKNESS), vm::onValue)
         MeasureField(Field.THICKNESS, state.text(Field.THICKNESS), vm::onValue)
+        state.thickness.forEach { Callout(it.message, Tone.Warning) }
     }
     Panel("Действия") {
         Instructions(
@@ -192,7 +198,7 @@ fun ClampStep(state: SetupUiState, vm: SetupViewModel) {
                 "Заключи: горния лост — от теб, долния — надолу.",
             ) else listOf(
                 "Сложи страната в предната летва така, че да излиза над предния ръб на шаблона с дебелината на хоризонталния детайл" +
-                    (t?.let { " (${it.mm()} mm)." } ?: "."),
+                    (front?.let { " (${it.mm()} mm)." } ?: "."),
                 "Сложи лицето или гърба в горната летва и го допри до вертикалния детайл — двата да са наравно под шаблона.",
                 "Провери, че и двата са допрени до стоперите. Заключи: горния лост — от теб, долния — надолу.",
                 "Отвий двата винта на шаблона, постави върховете на пръстите ${JigSpec.TEMPLATE_SETBACK.mm()} mm назад от лицето на вертикалния детайл и затегни.",
@@ -269,6 +275,7 @@ private fun DovetailBitStep(state: SetupUiState, lib: Library, vm: SetupViewMode
     Panel {
         BitDepthDiagram(state.value(Field.DEPTH), state.value(Field.BIT_DIAMETER), state.bit.valueOrNull())
         MeasureField(Field.DEPTH, state.text(Field.DEPTH), vm::onValue)
+        MeasureField(Field.FRONT_THICKNESS, state.text(Field.FRONT_THICKNESS), vm::onValue)
         MeasureField(Field.MIN_WALL, state.text(Field.MIN_WALL), vm::onValue)
         CalcView(state.wall) { w ->
             ResultGrid(listOf(ResultItem("Остатъчна стена (жлеб по дебелината)", w.remaining.mm(), highlight = true)))
@@ -367,6 +374,8 @@ fun TrialStep(state: SetupUiState) {
         when (state.joint) {
             JointType.DOVETAIL -> {
                 SummaryRow("Стопери", JigSpec.stopOffset(state.value(Field.FINGER), state.value(Field.SLOT))?.let(::stopOffsetText))
+                SummaryRow("Дебелина лице / страни", listOf(state.value(Field.FRONT_THICKNESS), state.value(Field.THICKNESS))
+                    .takeIf { l -> l.all { it != null } }?.joinToString(" / ") { it!!.mm() }?.let { "$it mm" })
                 SummaryRow("Шаблон назад от детайла", "${JigSpec.TEMPLATE_SETBACK.mm()} mm")
                 SummaryRow("Заден ограничител", state.backStop.display { "${it.distance.mm()} mm" })
                 SummaryRow("Дълбочина под пръстите", state.value(Field.DEPTH)?.let { "${it.mm()} mm" })
@@ -425,4 +434,27 @@ private fun TuneRow(problem: String, fix: String) {
         Text(problem, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         Text(fix, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
+}
+
+// ─── Дебелини спрямо шаблона ────────────────────────────────────────────
+
+@Composable
+private fun ThicknessPanel(state: SetupUiState, vm: SetupViewModel) = Panel("Дебелини") {
+    MeasureField(Field.FRONT_THICKNESS, state.text(Field.FRONT_THICKNESS), vm::onValue)
+    MeasureField(Field.THICKNESS, state.text(Field.THICKNESS), vm::onValue)
+    val limits = state.jig?.limits
+    if (limits != null) {
+        Text(
+            "${state.jig.name}: лице ${rangeText(limits.frontMin, limits.frontMax)}, страни ${rangeText(limits.sideMin, limits.sideMax)}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    } else {
+        Text(
+            "За този шаблон няма зададен обхват на дебелините — може да го добавиш в „Инструменти → Шаблони“.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+    state.thickness.forEach { Callout(it.message, Tone.Warning) }
 }
